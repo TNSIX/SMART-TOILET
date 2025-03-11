@@ -5,7 +5,6 @@
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 
-// Wi-Fi and NETPIE credentials
 //const char* ssid = "Gun";            // Network Name
 //const char* password = "HelloWorld";  // Password
 
@@ -27,7 +26,7 @@ int volume = 0;
 int count = 0;
 int flushingTime = 5000;
 time_t timestamp;
-char timeStr[20];  // Buffer for formatted time
+char timeStr[20]; 
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -51,11 +50,11 @@ void setup_wifi() {
 }
 
 void reconnect() {
-  while (!client.connected() && WiFi.status() == WL_CONNECTED) {  // Only try MQTT if WiFi is connected
+  while (!client.connected() && WiFi.status() == WL_CONNECTED) { 
     Serial.print("Attempting MQTT connection…");
     if (client.connect(mqtt_Client, mqtt_username, mqtt_password)) {
       Serial.println("connected");
-      client.subscribe("@msg/#");  // Subscribe to specific topic
+      client.subscribe("@msg/#");  
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -84,7 +83,7 @@ void setup() {
   pinMode(relay, OUTPUT);
   Serial.begin(115200);
   delay(10);
-  digitalWrite(relay, LOW);  // Default state of relay
+  digitalWrite(relay, LOW);
   /*----------------------------------*/
   Serial.begin(115200);
   setup_wifi();
@@ -100,7 +99,6 @@ void loop() {
     Serial.println("WiFi disconnected. Attempting to reconnect...");
     setup_wifi();
   }
-
   // Check MQTT connection
   if (!client.connected() && WiFi.status() == WL_CONNECTED) {
     reconnect();
@@ -128,18 +126,19 @@ void loop() {
 
     char timeBuffer[30];
     strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", timeinfo);
-    /*--- Time ---*/
+    /*------------*/
 
     digitalWrite(relay, HIGH);
-    delay(flushingTime);  // volume: 25 mL per sec
+    delay(flushingTime);  // Volume: 25 mL per sec
     count++;
     volume += (flushingTime / 1000) * 25;
 
-    // Publish data to NETPIE shadow
+    /*--- Publish data to NETPIE shadow ---*/
     String data = "{\"data\":{\"Count\":" + String(count) + ",\"volume\":" + String(volume) + ",\"Date-n-Time\":\"" + String(timeBuffer) + "\"}}";
     Serial.println("Publishing: " + data);
     data.toCharArray(msg, data.length() + 1);
     client.publish("@shadow/data/update", msg);
+    /*-------------------------------------*/
   } else {
     digitalWrite(relay, LOW);
     digitalWrite(blueLED, LOW);
